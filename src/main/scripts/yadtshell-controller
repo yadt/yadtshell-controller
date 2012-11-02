@@ -1,0 +1,86 @@
+#! /usr/bin/env python
+import sys
+import os
+import logging
+from optparse import OptionParser
+
+from twisted.internet import reactor
+
+import yadtshellcontroller
+
+reactor.exitcode = 127
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# ##teamcity[progressMessage '<message>']
+#
+# ##teamcity[progressStart '<message>']
+# ##teamcity[progressFinish '<message>']
+#        ^^^^ Hierbei sollte <message> den gleichen Wert haben wie beim Start
+#
+# ##teamcity[buildStatus status='FAILURE' text='<reason>']
+
+sf = logging.Formatter('%(asctime)s %(levelname)8s - %(message)s', '%Y%m%d-%H%M%S')
+ch = logging.StreamHandler()
+ch.setFormatter(sf)
+logger.addHandler(ch)
+
+prog = os.path.basename(sys.argv[0])
+
+
+usage = '''    %(prog)s TARGET TIMEOUT_WAIT info
+    %(prog)s TARGET TIMEOUT WAIT TIMEOUT_PENDING CMD [ARGS]''' % locals()
+
+parser = OptionParser(
+    usage=usage,
+    description='''With the first variant, the yadtbroadcast-server gets queried for the current state of the
+TARGET (json format, pretty-printed, suitable for grepping also).
+The connect times out after TIMEOUT_WAIT seconds.
+
+The second variant sends an event to a yadtbroadcast-server, requesting "CMD ARGS" for TARGET.
+Then waits up to TIMEOUT_WAIT seconds for
+a) a connect to a broadcaster, then
+b) for a "CMD started" event of a yadtshell process.
+Then waits up to TIMEOUT_PENDING seconds for a "CMD finished" event.
+
+Returns 0 on success; everything else represents a failure.
+
+Hint: Do not rely on receiving events, they may get lost somewhere in between;
+check the current state of the TARGET with the "info" call.''')
+
+opts, args = parser.parse_args()
+
+try:
+    target = args[0]
+    waiting_timeout = int(args[1])
+    if args[2] == "info":
+        pending_timeout = None
+        cmd = args[2]
+    else:
+        pending_timeout = int(args[2])
+        cmd = args[3]
+        args = args[4:]
+except BaseException, e:
+    logger.critical("not enough arguments given: %s" % e)
+    for line in ['usage:'] + usage.splitlines():
+        logger.info(line)
+    sys.exit(1)
+
+
+sys.path.append('/etc/yadtbroadcast-client')
+sys.path.append('/etc/yadtshell')
+import broadcasterconf
+sys.path.pop()
+sys.path.pop()
+
+client = broadcasterconf.create(target)
+ysc = yadtshellcontroller.Controller()
+
+reactor.callWhenRunning(client.connect)
+reactor.callWhenRunning(ysc.request, reactor, client, target, waiting_timeout, pending_timeout, cmd, args)
+
+reactor.run()
+
+logger.info('exit code: %i' % reactor.exitcode)
+sys.exit(reactor.exitcode)
