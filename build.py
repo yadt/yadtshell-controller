@@ -35,7 +35,7 @@ default_task = ['analyze', 'publish']
 
 @init
 def set_properties (project):
-    project.depends_on('yadtbroadcast-client', url='https://github.com/downloads/yadt/yadtbroadcast-client/yadtbroadcast-client-1.1.1.tar.gz')
+    project.depends_on('yadtbroadcast-client')
 
     project.set_property('coverage_break_build', False)
 
