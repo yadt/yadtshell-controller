@@ -38,7 +38,9 @@ parser = OptionParser(
 TARGET (json format, pretty-printed, suitable for grepping also).
 The connect times out after TIMEOUT_WAIT seconds.
 
-The second variant sends an event to a yadtbroadcast-server, requesting "CMD ARGS" for TARGET. If the arguments are options (like '-p') there should be a '--' delimiter before the first one, e.G. 'status -- -p 2 -n'.
+The second variant sends an event to a yadtbroadcast-server, requesting "CMD ARGS" for TARGET. 
+If the arguments are options (like '-p') there should be a '--' delimiter before the first
+one, e.G. 'status -- -p 2 -n'.
 Then waits up to TIMEOUT_WAIT seconds for
 a) a connect to a broadcaster, then
 b) for a "CMD started" event of a yadtshell process.
