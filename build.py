@@ -29,7 +29,7 @@ license = 'GNU GPL v3'
 name    = 'yadtshell-controller'
 summary = 'Sends commands to a yadtbroadcaster.'
 url     = 'https://github.com/yadt/yadtshell-controller'
-version = '0.2'
+version = '1.0.2'
 
 default_task = ['analyze', 'publish']
 
